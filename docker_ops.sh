@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-GIT_REPO_PATH="D:\docker-complete-udemy-course\deployment-01-starting-setup"
+GIT_REPO_PATH="D:/docker-complete-udemy-course/deployment-01-starting-setup/"
 DOCKER_REGISTRY="slobodang"
 DOCKER_TAG="latest"
 REGISTRY_USERNAME="slobodang"
@@ -31,25 +31,54 @@ perform_docker_operations() {
     # Build the Docker image
     docker build -t "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG" -f "$dockerfile" .
 
-    # Tag the Docker image for the registry
-    docker tag "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG" "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG"
+    # Display build information and ask for user confirmation
+    echo "Docker image $image_name:$DOCKER_TAG built successfully."
+    read -p "Do you want to push this image to the registry? (y/n): " push_confirm
 
-    # Push the Docker image to the registry
-    echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY"
-    docker push "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG"
+    if [ "$push_confirm" == "y" ]; then
+        # Tag the Docker image for the registry
+        docker tag "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG" "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG"
+
+        # Push the Docker image to the registry
+        echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY"
+        docker push "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG"
+
+        echo "Docker image $image_name:$DOCKER_TAG pushed to the registry."
+    else
+        echo "Docker image $image_name:$DOCKER_TAG was not pushed to the registry."
+    fi
 
     # Save the Docker image to a tarball
     docker save -o "${image_name}_image.tar" "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG"
 
-    # Load the Docker image from the tarball
-    docker load -i "${image_name}_image.tar"
+    # Display save information and ask for user confirmation
+    echo "Docker image $image_name:$DOCKER_TAG saved to ${image_name}_image.tar."
+    read -p "Do you want to load this image locally? (y/n): " load_confirm
 
-    # Run the Docker container
-    docker run -d --name "${image_name}-container" $ADDITIONAL_DOCKER_RUN_OPTIONS "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG"
+    if [ "$load_confirm" == "y" ]; then
+        # Load the Docker image from the tarball
+        docker load -i "${image_name}_image.tar"
+
+        echo "Docker image $image_name:$DOCKER_TAG loaded locally."
+    else
+        echo "Docker image $image_name:$DOCKER_TAG was not loaded locally."
+    fi
+
+    # Display run information and ask for user confirmation
+    read -p "Do you want to run a container with this image? (y/n): " run_confirm
+
+    if [ "$run_confirm" == "y" ]; then
+        # Run the Docker container
+        docker run -d --name "${image_name}-container" $ADDITIONAL_DOCKER_RUN_OPTIONS "$DOCKER_REGISTRY/$image_name:$DOCKER_TAG"
+
+        echo "Docker container ${image_name}-container running."
+    else
+        echo "Docker container ${image_name}-container was not started."
+    fi
 }
 
 # Navigate to the Git repository
-cd "$GIT_REPO_PATH" || exit
+cd $GIT_REPO_PATH || exit
 
 # Check for changes in the Git repository
 if git_has_changes; then
