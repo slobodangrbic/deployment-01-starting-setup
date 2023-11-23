@@ -1,14 +1,12 @@
 #!/bin/bash
 
-# Configuration
-GIT_REPO_PATH="."  # D:/docker-complete-udemy-course/deployment-01-starting-setup/
-DOCKER_REGISTRY="slobodang"
-DOCKER_TAG="latest"
-REGISTRY_USERNAME="slobodang"
-REGISTRY_PASSWORD="Tehnique051"
-ADDITIONAL_DOCKER_RUN_OPTIONS="-p 80:80 --rm"
-GIT_REMOTE="origin"
-GIT_BRANCH="main"
+# Source the configuration from the .env file
+if [[ -f .env ]]; then
+    source .env
+else
+    echo "Error: The .env file is missing. Please create one with the required configuration."
+    exit 1
+fi
 
 # Define an associative array of Docker image configurations
 declare -A IMAGES=(
@@ -76,13 +74,29 @@ perform_docker_operations() {
         echo "Docker container ${image_name}-container was not started."
     fi
 
+    # Display scp information and ask for user confirmation
+    read -p "Do you want to copy this image to another machine using scp? (y/n): " -n 1 scp_confirm
+    echo # Move to a new line after user input
+
+    if [ "$scp_confirm" == "y" ]; then
+        # Use scp to copy the Docker image tarball to the remote machine
+        scp "${image_name}_image.tar" "$SCP_REMOTE_USERNAME@$SCP_REMOTE_IP:$SCP_REMOTE_PATH"
+
+        echo "Docker image $image_name:$DOCKER_TAG copied to $SCP_REMOTE_USERNAME@$SCP_REMOTE_IP:$SCP_REMOTE_PATH."
+    else
+        echo "Docker image $image_name:$DOCKER_TAG was not copied using scp."
+    fi
+
     # Check for container health status
     read -p "Do you want to run a health check for this container? (y/n): " check_confirm
 
     if [ "$check_confirm" == "y" ]; then
         # Run the Docker container
+
+        sleep 5
+
         docker inspect --format='{{json .State.Health}}' "${image_name}-container"
-        
+
         sleep 30
 
         echo "Docker container status is healthy ${image_name}-container ."
@@ -112,4 +126,4 @@ fi
 # Prompt the user to confirm closing the window
 read -p "Press Enter to close the window..."
 
-# End of the script
+# End of the script ...
