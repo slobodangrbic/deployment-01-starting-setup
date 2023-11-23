@@ -14,10 +14,22 @@ declare -A IMAGES=(
     # Add more image configurations as needed
 )
 
+# Helper function to remove old dangling Docker images
+remove_old_images() {
+    echo "Checking for and removing old dangling Docker images..."
+    # Use the docker image prune command to remove dangling images
+    docker image prune -f
+    echo "Old dangling Docker images removed."
+}
+
 # Helper function to check if there are changes in the Git repository
 git_has_changes() {
     local changes
-    changes=$(git status -s)
+    # Fetch the latest changes from the remote repository
+    git fetch origin main
+
+    # Compare local changes with the remote tracking branch
+    changes=$(git status -s -uno)
     [[ -n "$changes" ]]
 }
 
@@ -75,7 +87,7 @@ perform_docker_operations() {
     fi
 
     # Display scp information and ask for user confirmation
-    read -p "Do you want to copy this image to another machine using scp? (y/n): " -n 1 scp_confirm
+    read -p "Do you want to copy this image to another machine using scp? (y/n): " scp_confirm
     echo # Move to a new line after user input
 
     if [ "$scp_confirm" == "y" ]; then
@@ -117,6 +129,9 @@ if git_has_changes; then
         dockerfile="${IMAGES[$image_name]}"
         perform_docker_operations "$image_name" "$dockerfile"
     done
+
+    # Remove old dangling Docker images
+    remove_old_images
 
     echo "Docker operations completed successfully."
 else
