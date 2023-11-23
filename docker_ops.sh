@@ -75,6 +75,20 @@ perform_docker_operations() {
     else
         echo "Docker container ${image_name}-container was not started."
     fi
+
+    # Check for container health status
+    read -p "Do you want to run a health check for this container? (y/n): " check_confirm
+
+    if [ "$check_confirm" == "y" ]; then
+        # Run the Docker container
+        docker inspect --format='{{json .State.Health}}' "${image_name}-container"
+        
+        sleep 30
+
+        echo "Docker container status is healthy ${image_name}-container ."
+    else
+        echo "Docker container status is not healthy ${image_name}-container ."
+    fi
 }
 
 # Navigate to the Git repository
@@ -94,3 +108,8 @@ if git_has_changes; then
 else
     echo "No changes detected in the Git repository. No Docker operations needed."
 fi
+
+# Prompt the user to confirm closing the window
+read -p "Press Enter to close the window..."
+
+# End of the script
