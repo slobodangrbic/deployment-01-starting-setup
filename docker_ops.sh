@@ -14,6 +14,14 @@ declare -A IMAGES=(
     # Add more image configurations as needed
 )
 
+# Helper function to pull changes from GitHub
+git_pull() {
+    local remote="$1"
+    local branch="$2"
+
+    git pull "$remote" "$branch"
+}
+
 # Helper function to check if there are changes in the Git repository
 git_has_changes() {
     local changes
@@ -107,6 +115,9 @@ perform_docker_operations() {
 
 # Navigate to the Git repository
 cd $GIT_REPO_PATH || exit
+
+# Pull changes from GitHub
+git_pull "$GIT_REMOTE" "$GIT_BRANCH"
 
 # Check for changes in the Git repository
 if git_has_changes; then
