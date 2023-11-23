@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-GIT_REPO_PATH="D:/docker-complete-udemy-course/deployment-01-starting-setup/"
+GIT_REPO_PATH="."  # D:/docker-complete-udemy-course/deployment-01-starting-setup/
 DOCKER_REGISTRY="slobodang"
 DOCKER_TAG="latest"
 REGISTRY_USERNAME="slobodang"
